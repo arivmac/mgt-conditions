@@ -1,0 +1,48 @@
+{
+  "name": "mgt-conditions",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Runner-reported conditions for Toronto's Martin Goodman Trail, built with Mast for Astro",
+  "keywords": [
+    "astro",
+    "css-framework",
+    "design-system",
+    "components",
+    "mast",
+    "webflow"
+  ],
+  "homepage": "https://github.com/CoreyMoen/mast-astro#readme",
+  "bugs": {
+    "url": "https://github.com/CoreyMoen/mast-astro/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CoreyMoen/mast-astro.git"
+  },
+  "license": "MIT",
+  "author": "Corey Moen",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@phosphor-icons/core": "^2.1.1",
+    "astro": "^7.2.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.2.0",
+    "playwright-core": "^1.62.1",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^6.0.3"
+  }
+}

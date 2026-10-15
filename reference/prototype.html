@@ -1,0 +1,660 @@
+<title>MGT Conditions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap">
+<style>
+/* Layout: one scrolling page. Verdict beside the hourly strip, a slim full-width map strip, then sections (left) with the report form and email (right, sticky). Deliberately single dark theme; colour only for trail conditions. */
+:root{
+  color-scheme:dark;
+  --bg:#000000; --panel:#0E0E0E; --raise:#161616; --hover:#1C1C1C;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+  --fg:rgba(255,255,255,.95); --fg-2:rgba(255,255,255,.70); --fg-3:rgba(255,255,255,.48);
+  --inv:#000000;
+  --clear:#3DD68C; --wet:#5AB8F0; --slush:#F5B83D; --snow:#B7BEC8; --icy:#7C8CFF; --none:rgba(255,255,255,.22);
+  --font:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --hdr:60px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased;font-feature-settings:'cv11','ss01'}
+button,input,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;text-wrap:balance}
+:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;height:var(--hdr);background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:16px;padding-inline:24px}
+.left{display:flex;align-items:center;gap:28px}
+.logo{font-weight:800;font-style:italic;text-transform:uppercase;font-size:12px;line-height:.92;letter-spacing:-.04em}
+nav.links{display:flex;gap:20px}
+nav.links a{color:var(--fg-2);text-decoration:none;font-size:15px;font-weight:500}
+nav.links a:hover{color:var(--fg)}
+.where{display:flex;align-items:center;gap:10px;height:40px;padding:0 14px 0 6px;border-radius:999px;background:var(--panel);border:1px solid var(--line);min-width:0}
+.where .chip{padding:4px 10px;border-radius:999px;background:var(--raise);border:1px solid var(--line-2);font-size:13px;font-weight:500;white-space:nowrap}
+.where span{color:var(--fg-3);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 18px;border-radius:999px;border:1px solid transparent;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap}
+.pill.white{background:var(--fg);color:var(--inv)}
+.pill.white:hover{background:#fff}
+.pill.white:disabled{background:var(--raise);color:var(--fg-3);cursor:not-allowed}
+.pill.ghost{background:var(--raise);border-color:var(--line);color:var(--fg-2)}
+.pill.ghost:hover{border-color:var(--line-2);color:var(--fg)}
+.pill.ghost:disabled{opacity:.5;cursor:default}
+.pill.sm{min-height:32px;padding:0 12px;font-size:13px}
+@media (max-width:860px){nav.links,.where{display:none} header.top{padding-inline:16px}}
+
+.page{max-width:1160px;margin:0 auto;padding-inline:24px;padding-block:16px 48px;display:flex;flex-direction:column;gap:20px}
+@media (max-width:860px){.page{padding-inline:16px}}
+.top-row{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:stretch}
+@media (max-width:860px){.top-row{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+.side{display:flex;flex-direction:column;gap:20px}
+@media (min-width:861px){.side{position:sticky;top:calc(var(--hdr) + env(safe-area-inset-top,0px) + 16px)}}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.list{overflow:hidden}
+
+.hours-box{padding:18px 12px 16px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.hours-box .lbl{padding:0 8px;display:flex;justify-content:space-between;font-size:13px;color:var(--fg-2)}
+.hours-box .lbl b{color:var(--fg);font-weight:600}
+.hours{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.hour{display:flex;flex-direction:column;align-items:center;gap:6px}
+.hour .h{font-size:11px;font-weight:500;color:var(--fg-3);text-transform:uppercase;letter-spacing:.02em}
+.hour .t{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:17px;font-weight:500;color:var(--fg-2)}
+.hour.now .h{color:var(--fg)}
+.hour.now .t{background:var(--fg);color:var(--inv);font-weight:600}
+.hour .d{width:6px;height:6px;border-radius:50%}
+
+.verdict{padding:8px 0;display:flex;flex-direction:column;gap:10px;justify-content:center}
+.eyebrow{font-size:13px;color:var(--fg-3)}
+.verdict h1{font-size:clamp(28px,4vw,40px);line-height:1.12;font-weight:600;letter-spacing:-.025em}
+.verdict p{margin:0;font-size:14px;color:var(--fg-2);line-height:1.5}
+.verdict .bet{color:var(--fg);font-weight:500}
+.verdict .bet:empty{display:none}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:500;color:var(--fg-2)}
+.tag b{color:var(--fg);font-weight:600}
+.note-sm{font-size:12px;color:var(--fg-3)}
+
+.count{padding:14px 16px;font-size:13px;color:var(--fg-2);border-bottom:1px solid var(--line)}
+.group:first-of-type{}
+.count b{color:var(--fg);font-weight:600}
+.group{padding:20px 16px 12px;font-size:15px;font-weight:500;border-bottom:1px solid var(--line)}
+.group span{color:var(--fg-2);font-weight:400}
+.row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 12px;padding:18px 16px;border-bottom:1px solid var(--line);align-items:center}
+#sections .row:last-child{border-bottom:0}
+.row:hover{background:var(--raise)}
+.row .time{font-size:13px;color:var(--fg-2);font-variant-numeric:tabular-nums}
+.row .body{display:flex;flex-direction:column;gap:4px;min-width:0}
+.row .meta{font-size:12px;color:var(--fg-3);font-variant-numeric:tabular-nums}
+.row h3{font-size:16px;font-weight:500;letter-spacing:-.01em}
+.row .sub{font-size:12px;color:var(--fg-2);display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.row .sub .sep{color:var(--fg-3)}
+.status{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--fg)}
+.status i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.row .quote{font-size:13px;color:var(--fg-2);margin:4px 0 0}
+.row .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.row .photo{width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:6px;border:1px solid var(--line)}
+.hl{scroll-margin-top:calc(var(--hdr) + 16px)}
+.flag{color:var(--slush);font-weight:600}
+
+.mail{padding:20px;display:flex;flex-direction:column;gap:14px}
+.mail h2{font-size:18px;font-weight:600;letter-spacing:-.015em}
+.mail p{margin:0;color:var(--fg-2);font-size:13px;line-height:1.5}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:var(--fg-3)}
+input[type=email],textarea{width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:16px}
+input[type=email]::placeholder,textarea::placeholder{color:var(--fg-3)}
+input[type=email]:focus,textarea:focus{outline:none;border-color:var(--fg-2)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{display:flex;align-items:center;justify-content:center;min-height:34px;border-radius:999px;font-size:13px;font-weight:500;color:var(--fg-2);cursor:pointer;text-align:center;padding:0 8px}
+.seg input:checked + label{background:var(--raise);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
+.seg input:focus-visible + label{outline:2px solid var(--fg)}
+.msg{font-size:13px;padding:10px 12px;border-radius:8px;background:var(--raise);color:var(--fg)}
+.msg.ok{box-shadow:inset 3px 0 0 var(--clear)}
+.foot{padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--fg-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+.map{position:relative;border-radius:12px;overflow:hidden;background-color:#0A0A0A;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:64px 64px;background-position:-1px -1px;border:1px solid var(--line)}
+.map svg{display:block;width:100%;height:auto;min-height:150px}
+.map .seg{cursor:pointer;outline:none}
+.map .seg .hit{stroke:transparent;stroke-width:34;fill:none}
+.map .seg .vis{transition:opacity .2s,stroke-width .2s}
+.map.hovering .seg:not(.on) .vis{opacity:.22}
+.map .seg.on .vis{stroke-width:11}
+.map .seg:focus-visible .vis{stroke-width:11}
+.map .lbl{transition:opacity .2s}
+.map .lmk{transition:opacity .2s}
+.map.hovering .lmk{opacity:.35}
+@media (max-width:640px){.map .lmk{display:none}}
+.map.hovering .lbl:not(.on){opacity:.3}
+.mapwrap{position:relative}
+.tip{position:absolute;z-index:3;width:250px;padding:12px 14px;border-radius:12px;background:rgba(18,18,18,.94);border:1px solid var(--line-2);box-shadow:0 16px 40px rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:none;display:flex;flex-direction:column;gap:6px;transform:translate(-50%,calc(-100% - 14px))}
+.tip.below{transform:translate(-50%,14px)}
+.tip .t1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tip h4{margin:0;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.tip .m{font-size:12px;color:var(--fg-3);font-variant-numeric:tabular-nums}
+.tip .q{font-size:12px;color:var(--fg-2)}
+.tip .cta{font-size:12px;color:var(--fg-2);border-top:1px solid var(--line);padding-top:8px;margin-top:2px}
+.row.on{background:var(--raise)}
+@keyframes flash{0%{box-shadow:inset 3px 0 0 var(--fg)}100%{box-shadow:inset 3px 0 0 transparent}}
+.row.flash{animation:flash 1.6s ease-out}
+@media (prefers-reduced-motion:reduce){.row.flash{animation:none;box-shadow:inset 3px 0 0 var(--fg)} .map .seg .vis,.map .lbl{transition:none}}
+.mapfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--fg-2)}
+.legend{display:flex;flex-wrap:wrap;gap:14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:7px;height:7px;border-radius:50%}
+.live{display:inline-flex;align-items:center;gap:8px;color:var(--fg-3)}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--clear)}
+
+.drawer{display:flex;flex-direction:column;scroll-margin-top:calc(var(--hdr) + 16px)}
+.drawer header{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.drawer h2{font-size:17px;font-weight:600;letter-spacing:-.015em}
+.drawer form{padding:18px 20px 4px;display:flex;flex-direction:column;gap:20px}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+legend{font-size:12px;color:var(--fg-3);margin-bottom:8px;padding:0}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.opts.one{grid-template-columns:minmax(0,1fr)}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.opt label{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:14px;font-weight:500;cursor:pointer}
+.opt label:hover{border-color:var(--line-2)}
+.opt input:checked + label{border-color:var(--fg);background:var(--raise)}
+.opt input:focus-visible + label{outline:2px solid var(--fg);outline-offset:2px}
+.opt .sw{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.opt small{color:var(--fg-3);font-weight:400;font-size:12px;margin-left:auto}
+.file{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--fg-2)}
+.hour .w{display:flex;align-items:center;gap:2px;font-size:11px;color:var(--fg-3);font-variant-numeric:tabular-nums}
+.hour .w svg{flex-shrink:0}
+.hours-box .tip2{padding:0 8px;font-size:13px;color:var(--fg-2);display:flex;flex-direction:column;gap:2px}
+.hours-box .tip2 b{color:var(--fg);font-weight:600}
+.haz{display:flex;align-items:flex-start;gap:8px;margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--raise);border:1px solid var(--line);font-size:12px;color:var(--fg-2)}
+.haz b{color:var(--fg);font-weight:600}
+.hz-ic{flex-shrink:0;width:16px;height:16px;border-radius:4px;background:var(--fg);color:var(--inv);display:grid;place-items:center;font-size:11px;font-weight:800;transform:rotate(45deg);margin:1px 2px 0}
+.hz-ic span{transform:rotate(-45deg)}
+.haz .hz-body{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lnk{background:none;border:0;padding:6px 4px;margin:-6px 0;font-size:12px;color:var(--fg-3);cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--line-2)}
+.lnk:hover{color:var(--fg)}
+.lnk:disabled{cursor:default;text-decoration:none;color:var(--fg-3)}
+.lnk.danger{color:#FF8A80}
+.links-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.modnote{font-size:12px;color:#FF8A80;font-weight:500}
+.tip .hzl{font-size:12px;color:var(--fg);display:flex;gap:6px;align-items:center}
+.tip .spray{font-size:12px;color:var(--fg-2)}
+.kind{margin:0 0 4px}
+.drawer .submitbar{padding:14px 20px 20px;display:flex;flex-direction:column;gap:10px}
+.drawer .submitbar .pill{width:100%;min-height:46px;font-size:15px}
+</style>
+
+<header class="top">
+  <div class="left">
+    <div class="logo" aria-label="MGT Conditions">MGT<br>Conditions</div>
+  </div>
+  <div class="where"><span class="chip">Toronto</span><span>Martin Goodman Trail · Humber Bay to Beaches</span></div>
+  <a class="pill white" href="#drawer" id="openReport">Report conditions</a>
+</header>
+
+<main class="page">
+  <section class="top-row">
+    <div class="verdict" aria-live="polite">
+      <div class="eyebrow num" id="today"></div>
+      <h1 id="verdict">Checking the trail…</h1>
+      <p id="why"></p>
+      <p class="bet" id="bet"></p>
+      <div class="tags" id="chips"></div>
+    </div>
+    <div class="box hours-box">
+      <div class="lbl"><span>Today's forecast</span><span>Dot = ice risk · arrow = wind</span></div>
+      <div class="hours" id="hours" aria-label="Hourly forecast"></div>
+      <div class="tip2" id="windTip"></div>
+      <div class="note-sm" style="padding:0 8px">Example forecast. The Astro build pulls Open‑Meteo.</div>
+    </div>
+  </section>
+
+  <section aria-label="Trail map">
+    <div class="mapwrap"><div class="map" id="mapBox"><div id="map"></div></div><div class="tip" id="tip" hidden></div></div>
+    <div class="mapfoot">
+      <div class="legend">
+        <span><i style="background:var(--clear)"></i>Clear</span>
+        <span><i style="background:var(--wet)"></i>Wet</span>
+        <span><i style="background:var(--slush)"></i>Slush</span>
+        <span><i style="background:var(--snow)"></i>Packed snow</span>
+        <span><i style="background:var(--icy)"></i>Icy</span>
+        <span><i style="background:var(--none)"></i>No report</span>
+        <span><span class="hz-ic" style="width:11px;height:11px;margin:0 2px"></span>Hazard</span>
+      </div>
+      <span class="live"><span class="note-sm" style="margin-right:10px">Hover a section for details</span><i></i><span id="liveTxt">Live</span></span>
+    </div>
+  </section>
+
+  <div class="main">
+    <section class="box list hl" id="list-wrap">
+      <div class="count" id="list"></div>
+      <div id="sections"></div>
+    </section>
+
+    <div class="side">
+      <section class="box drawer" id="drawer" aria-labelledby="drawerTitle">
+        <header><h2 id="drawerTitle">Report conditions</h2></header>
+        <form id="report" novalidate>
+          <div class="seg kind" role="radiogroup" aria-label="What are you reporting">
+            <input type="radio" name="kind" id="kind-surface" value="surface" checked><label for="kind-surface">Surface</label>
+            <input type="radio" name="kind" id="kind-hazard" value="hazard"><label for="kind-hazard">Hazard</label>
+          </div>
+          <fieldset><legend>Where are you?</legend><div class="opts" id="secOpts"></div></fieldset>
+          <fieldset id="surfSet"><legend>How's the surface?</legend><div class="opts one" id="surfOpts"></div></fieldset>
+          <fieldset id="hazSet" hidden><legend>What's the hazard?</legend><div class="opts" id="hazOpts"></div></fieldset>
+          <fieldset>
+            <legend>Anything else? Optional</legend>
+            <textarea id="note" rows="2" maxlength="200" aria-label="Note" placeholder="e.g. Boardwalk icy, paved path beside it OK"></textarea>
+            <div class="file" id="photoRow" hidden><label for="photo">Add a photo</label><input type="file" id="photo" accept="image/*"></div>
+          </fieldset>
+        </form>
+        <div class="submitbar">
+          <button class="pill white" type="submit" form="report" id="submit" disabled>Post report</button>
+          <div id="formMsg" hidden></div>
+          <div class="note-sm">No account needed. One report per section every 10 minutes. Hazards stay up for 3 days or until someone marks them cleared.</div>
+        </div>
+      </section>
+
+      <form class="box mail hl" id="subscribe" novalidate>
+        <h2 id="mail">Get it before your run</h2>
+        <p>A short email at 5:45am with the ice call, the best time to run and every section.</p>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="seg" role="radiogroup" aria-label="How often">
+          <input type="radio" name="mode" id="mode-daily" value="daily" checked><label for="mode-daily">Every morning</label>
+          <input type="radio" name="mode" id="mode-icy" value="icy"><label for="mode-icy">Only when icy</label>
+        </div>
+        <button class="pill white" type="submit" id="subBtn">Subscribe</button>
+        <div id="subMsg" hidden></div>
+        <div class="note-sm" id="subCount"></div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span>Community reports plus forecast. Not affiliated with the City of Toronto.</span>
+    <span id="conn">Connecting…</span>
+  </footer>
+</main>
+
+<script>
+(function(){
+const SECTIONS=[
+  {id:'humber',name:'Humber Bay Shores',zone:'West end',path:'M40 252 C90 240 130 228 190 222',lx:70,ly:212},
+  {id:'ontario',name:'Ontario Place / Coronation Park',zone:'West end',path:'M200 220 C270 208 330 172 400 163',lx:250,ly:176},
+  {id:'harbour',name:'Harbourfront / Queens Quay',zone:'Downtown',path:'M412 162 C480 152 530 180 600 176',lx:450,ly:138},
+  {id:'cherry',name:'Cherry St / Port Lands',zone:'Downtown',path:'M612 175 C670 172 710 198 780 191',lx:650,ly:160},
+  {id:'leslie',name:'Leslie St to Ashbridges Bay',zone:'East end',path:'M792 189 C860 181 900 210 980 201',lx:840,ly:168},
+  {id:'beaches',name:'Beaches Boardwalk',zone:'East end',path:'M992 199 C1060 190 1120 142 1206 148',lx:1070,ly:150}
+];
+const ZONES=[['West end','Humber Bay to Ontario Place'],['Downtown','Harbourfront to Port Lands'],['East end','Leslie St to the Beaches']];
+const SHORT={humber:'Humber Bay',ontario:'Ontario Place',harbour:'Harbourfront',cherry:'Cherry St',leslie:'Leslie St',beaches:'Beaches'};
+const SURF={
+  clear:{label:'Clear',hint:'Dry pavement'},
+  wet:{label:'Wet',hint:'Not slippery'},
+  slush:{label:'Slush',hint:'Soft, splashy'},
+  snow:{label:'Packed snow',hint:'Grippy, uneven'},
+  icy:{label:'Icy',hint:'Spikes or walk it'}
+};
+// [hour, °C, wind from (deg), wind km/h]
+const FORECAST={low:-6,high:3,hours:[[6,-6,90,28],[8,-4,95,26],[10,-1,110,22],[12,2,135,18],[14,3,150,15],[16,2,180,12],[18,-1,225,10]]};
+const EXPOSED=['humber','beaches'];
+// Landmarks along the lake side, placed by fraction along each section's line
+const LANDMARKS=[
+  ['humber',.2,'Humber Bay Park'],['humber',.92,'Humber Bridge'],
+  ['ontario',.3,'Sunnyside'],['ontario',.92,'Coronation Park'],
+  ['harbour',.35,'HTO Park'],['harbour',.85,'Ferry Terminal'],
+  ['cherry',.12,'Sugar Beach'],['cherry',.8,'Cherry Beach'],
+  ['leslie',.2,'Tommy Thompson Park'],['leslie',.85,'Ashbridges Bay'],
+  ['beaches',.2,'Woodbine Beach'],['beaches',.85,'Balmy Beach']
+];
+const HAZ={flood:'Flooding',closure:'Closed or detour',construction:'Construction',debris:'Debris or branch',waves:'Waves over path',other:'Other'};
+const HAZ_AGE=72*3600e3, FLAG_LIMIT=3;
+const MAX_AGE=12*3600e3;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const riskOf=t=>t<=-2?'high':t<1?'med':'low';
+const riskColor={high:'var(--icy)',med:'var(--slush)',low:'var(--clear)'};
+const hhmm=ms=>new Date(ms).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const hLabel=h=>(h%12||12)+(h<12?'a':'p');
+const hClock=h=>String(h).padStart(2,'0')+':00';
+function ago(ms){const m=Math.round((Date.now()-ms)/60000);if(m<1)return'just now';if(m<60)return m+' min ago';return Math.floor(m/60)+'h ago';}
+
+let reports=[],votes=[],hazards=[],flags=[],db=null,uid=null,assets=null,userCap=null,isOwner=false;
+let picked={kind:'surface',section:null,surface:null,hazard:null};
+const compass=d=>['N','NE','E','SE','S','SW','W','NW'][Math.round(((d%360)+360)%360/45)%8];
+const flagCount=id=>flags.filter(f=>f.targetId===id).length;
+const hiddenByFlags=x=>!x.kept&&flagCount(x.id)>=FLAG_LIMIT;
+const canSee=x=>isOwner||!hiddenByFlags(x);
+const myFlag=id=>uid&&flags.some(f=>f.targetId===id&&f.by===uid);
+function sprayAt(i){const [h,t,dir,sp]=FORECAST.hours[i];return t<=0&&sp>=20&&dir>=45&&dir<=200;}
+function hazardsFor(sec){const n=Date.now();return hazards.filter(h=>h.section===sec&&!h.clearedAt&&n-h.at<HAZ_AGE&&canSee(h)).sort((a,b)=>b.at-a.at);}
+const arrow=(dir,size)=>`<svg width="${size}" height="${size}" viewBox="0 0 12 12" style="transform:rotate(${dir+180}deg)" aria-hidden="true"><path d="M6 1.5v9M2.8 4.7L6 1.5l3.2 3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function currentHourIdx(){const h=new Date().getHours();let i=0;FORECAST.hours.forEach((x,j)=>{if(x[0]<=h)i=j;});return i;}
+function forecastRiskNow(){return riskOf(FORECAST.hours[currentHourIdx()][1]);}
+function safeWindow(){const s=FORECAST.hours.filter(([h,t])=>riskOf(t)==='low');return s.length?[s[0][0],s[s.length-1][0]]:null;}
+function clearsAt(){const x=FORECAST.hours.find(([h,t])=>riskOf(t)==='low');return x?hLabel(x[0])+'m':null;}
+
+function renderForecast(){
+  const d=new Date();
+  $('#today').textContent=d.toLocaleDateString('en-CA',{weekday:'long',day:'numeric',month:'short'})+' · '+hhmm(d);
+  const now=currentHourIdx();
+  $('#hours').innerHTML=FORECAST.hours.map(([h,t,dir,sp],i)=>`<div class="hour${i===now?' now':''}"><span class="h">${hLabel(h)}</span><span class="t num">${t}°</span><span class="d" style="background:${riskColor[riskOf(t)]}" title="Ice risk ${riskOf(t)}"></span><span class="w" title="Wind ${sp} km/h from ${compass(dir)}">${arrow(dir,10)}${sp}</span></div>`).join('');
+  const [,,dir,sp]=FORECAST.hours[now];
+  const east=Math.sin(dir*Math.PI/180)>0;
+  const sprayHours=FORECAST.hours.filter((x,i)=>i>=now&&sprayAt(i));
+  let tip=`<span>Wind <b>${sp} km/h from the ${compass(dir)}</b>. Head ${east?'east':'west'} first and finish with it at your back.</span>`;
+  if(sprayHours.length)tip+=`<span>Lake spray can freeze at Humber Bay and the Beaches until ~${hLabel(sprayHours[sprayHours.length-1][0]+2)}m.</span>`;
+  $('#windTip').innerHTML=tip;
+}
+
+const tally=id=>{let yes=0,no=0;for(const v of votes)if(v.reportId===id)v.vote==='yes'?yes++:no++;return{yes,no};};
+const latestFor=sec=>{const n=Date.now();return reports.filter(r=>r.section===sec&&n-r.at<MAX_AGE&&canSee(r)).sort((a,b)=>b.at-a.at)[0]||null;};
+const reportCountBy=by=>by?reports.filter(r=>r.by===by).length:0;
+
+function renderVerdict(){
+  const withR=SECTIONS.map(s=>({s,r:latestFor(s.id)})).filter(x=>x.r);
+  const icy=withR.filter(x=>x.r.surface==='icy');
+  const soft=withR.filter(x=>x.r.surface==='slush'||x.r.surface==='snow');
+  const clear=withR.filter(x=>x.r.surface==='clear');
+  const risk=forecastRiskNow(), recent=reports.filter(r=>Date.now()-r.at<MAX_AGE).length;
+  let v,why;
+  if(icy.length){
+    v=risk==='low'?'Slippery in spots':'Slippery'+(clearsAt()?' until ~'+clearsAt():' in spots');
+    why='Icy at '+icy.map(x=>SHORT[x.s.id]).join(', ')+'.'+(clear.length?' Clear at '+clear.map(x=>SHORT[x.s.id]).join(', ')+'.':'');
+  }else if(risk==='high'){
+    v='Likely slippery'+(clearsAt()?' until ~'+clearsAt():'');
+    why=`Yesterday's melt refroze overnight, low of ${FORECAST.low}°C. `+(recent?'No one has reported ice yet.':'No reports yet today. Be the first.');
+  }else if(soft.length){v='Slushy in spots';why='Snow or slush at '+soft.map(x=>SHORT[x.s.id]).join(', ')+'.';}
+  else if(withR.length&&withR.every(x=>x.r.surface==='wet'||x.r.surface==='clear')&&withR.some(x=>x.r.surface==='wet')){v='Wet but runnable';why='No ice reported. Expect puddles at '+withR.filter(x=>x.r.surface==='wet').map(x=>SHORT[x.s.id]).join(', ')+'.';}
+  else{v='Good to go';why=recent?'Recent reports say the trail is clear.':'Forecast looks fine. No reports yet today.';}
+  const nowI=currentHourIdx(),spray=sprayAt(nowI);
+  if(spray)why+=` Strong ${compass(FORECAST.hours[nowI][2])} wind off the lake: spray icing likely at Humber Bay and the Beaches.`;
+  const hz=SECTIONS.flatMap(s=>hazardsFor(s.id).map(h=>({h,s})));
+  if(hz.length)why+=' '+hz.slice(0,2).map(x=>HAZ[x.h.type]+' at '+SHORT[x.s.id]).join('. ')+(hz.length>2?` and ${hz.length-2} more`:'')+'.';
+  $('#verdict').textContent=v;$('#why').textContent=why;
+  // Best bet: where and when to run, without assuming special gear
+  const good=withR.filter(x=>x.r.surface==='clear'||x.r.surface==='wet').map(x=>SHORT[x.s.id]);
+  const bad=icy.length||risk==='high'||(soft.length&&!good.length);
+  const win=safeWindow(), later=win&&new Date().getHours()<win[0];
+  let bet='';
+  if(bad){
+    if(good.length&&later)bet=`Best bet: stick to ${good.slice(0,2).join(' or ')} now, or wait until after ${hLabel(win[0])}m for the whole trail.`;
+    else if(good.length)bet=`Best bet: stick to ${good.slice(0,2).join(' or ')}.`;
+    else if(later)bet=`Best bet: wait until after ${hLabel(win[0])}m, when it warms up above zero.`;
+    else bet='Best bet: shorten your stride and walk the icy stretches.';
+  }
+  $('#bet').textContent=bet;
+  const w=safeWindow();
+  $('#chips').innerHTML=`<span class="tag">Best window <b class="num">${w?hClock(w[0])+'–'+hClock(w[1]):'none'}</b></span><span class="tag">Ice risk <b>${{high:'High',med:'Moderate',low:'Low'}[risk]}</b></span><span class="tag">Wind <b class="num">${FORECAST.hours[nowI][3]} km/h ${compass(FORECAST.hours[nowI][2])}</b></span><span class="tag"><b class="num">${recent}</b> reports · 12h</span>${hz.length?`<span class="tag"><b class="num">${hz.length}</b> hazard${hz.length===1?'':'s'}</span>`:''}`;
+  $('#list').innerHTML=`Showing <b>${SECTIONS.length}</b> sections · <b>${withR.length}</b> with a recent report${hz.length?` · <b>${hz.length}</b> hazard${hz.length===1?'':'s'}`:''}`;
+}
+
+function renderMap(){
+  const segs=SECTIONS.map(s=>{const r=latestFor(s.id);const c=r?`var(--${r.surface})`:'var(--none)';return `<g class="seg${s.id===active?' on':''}" data-sec="${s.id}" tabindex="0" role="button" aria-label="${esc(s.name)}: ${r?SURF[r.surface].label:'no recent report'}. Show in list"><path class="hit" d="${s.path}"/><path class="vis" d="${s.path}" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/></g>`}).join('');
+  const nodes=SECTIONS.map(s=>{const m=s.path.match(/(\d+) (\d+)$/);return `<circle cx="${m[1]}" cy="${m[2]}" r="4" fill="#000" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>`}).join('');
+  const labels=SECTIONS.map(s=>`<text class="lbl${s.id===active?' on':''}" data-lbl="${s.id}" pointer-events="none" x="${s.lx}" y="${s.ly}" font-size="14" font-weight="500" fill="rgba(255,255,255,.85)" font-family="Inter, sans-serif">${esc(SHORT[s.id])}</text>`).join('');
+  const photos=SECTIONS.map(s=>{const r=latestFor(s.id);if(!r||!r.photoId)return'';const m=s.path.match(/M(\d+) (\d+)/);return `<g transform="translate(${+m[1]+40},${+m[2]-34})"><rect x="-13" y="-13" width="26" height="26" rx="13" fill="#fff"/><path d="M-6 -3h3l1.5-2h3l1.5 2h3v8h-12z" fill="none" stroke="#000" stroke-width="1.4" stroke-linejoin="round"/><circle cx="0" cy="1" r="2" fill="none" stroke="#000" stroke-width="1.4"/></g>`}).join('');
+  const hzMarks=SECTIONS.map(s=>{const list=hazardsFor(s.id);if(!list.length)return'';const a=s.path.match(/M(\d+) (\d+)/),b=s.path.match(/(\d+) (\d+)$/);const x=(+a[1]+ +b[1])/2+18,y=(+a[2]+ +b[2])/2-30;
+    return `<g transform="translate(${x},${y})"><line x1="0" y1="8" x2="0" y2="24" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/><rect x="-9" y="-9" width="18" height="18" rx="3" transform="rotate(45)" fill="#fff"/><text x="0" y="4.5" text-anchor="middle" font-size="12" font-weight="800" fill="#000" font-family="Inter, sans-serif">${list.length>1?list.length:'!'}</text></g>`}).join('');
+  $('#map').innerHTML=`<svg viewBox="0 95 1246 220" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the Martin Goodman Trail coloured by latest condition">
+    <path d="M-400 260 C60 250 110 228 180 220 C260 210 320 170 400 160 C470 150 520 180 600 175 C660 170 700 200 780 190 C860 180 900 210 980 200 C1060 190 1120 140 1700 150 V900 H-400 Z" fill="#050505" stroke="rgba(255,255,255,.12)"/>
+    ${segs}<g pointer-events="none">${nodes}${photos}${hzMarks}</g>${labels}
+    <g class="lmk" id="lmks" pointer-events="none"></g>
+    <text x="1080" y="304" font-size="11" fill="rgba(255,255,255,.3)" font-family="Inter, sans-serif" letter-spacing="2">LAKE ONTARIO</text>
+  </svg>`;
+  addLandmarks();
+}
+
+function addLandmarks(){
+  const g=document.getElementById('lmks');if(!g)return;
+  let out='';
+  LANDMARKS.forEach(([sec,t,name],i)=>{
+    const p=document.querySelector(`#map .seg[data-sec="${sec}"] .vis`);if(!p)return;
+    const pt=p.getPointAtLength(p.getTotalLength()*t);
+    const dy=i%2?40:24;
+    out+=`<line x1="${pt.x}" y1="${pt.y+5}" x2="${pt.x}" y2="${pt.y+dy-11}" stroke="rgba(255,255,255,.18)" stroke-width="1"/>`+
+         `<circle cx="${pt.x}" cy="${pt.y}" r="2.2" fill="rgba(255,255,255,.75)"/>`+
+         `<text x="${pt.x}" y="${pt.y+dy}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.5)" font-family="Inter, sans-serif">${esc(name)}</text>`;
+  });
+  g.innerHTML=out;
+}
+let active=null;
+const mapBox=()=>$('#mapBox');
+function tipExtras(id){
+  let out=hazardsFor(id).slice(0,2).map(h=>`<div class="hzl"><span class="hz-ic" style="width:11px;height:11px"></span>${HAZ[h.type]} · ${ago(h.at)}</div>`).join('');
+  if(EXPOSED.includes(id)&&sprayAt(currentHourIdx()))out+=`<div class="spray">Exposed to lake spray. Icing likely in this wind.</div>`;
+  return out;
+}
+function tipHtml(id){
+  const s=SECTIONS.find(x=>x.id===id),r=latestFor(id);
+  if(!r){const g={high:'Forecast says likely icy',med:'Forecast says possible icy patches',low:'Forecast looks fine'}[forecastRiskNow()];
+    return `<div class="t1"><h4>${esc(s.name)}</h4><span class="status"><i style="background:var(--none)"></i>Unknown</span></div><div class="m">No report in 12h</div><div class="q">${g}.</div>${tipExtras(id)}<div class="cta">Click to report this section</div>`;}
+  const t=tally(r.id);
+  return `<div class="t1"><h4>${esc(s.name)}</h4><span class="status"><i style="background:var(--${r.surface})"></i>${SURF[r.surface].label}</span></div>
+    <div class="m">${hhmm(r.at)} · ${ago(r.at)} · ${t.yes?'confirmed by '+t.yes:'unconfirmed'}${t.no>t.yes?' · may have changed':''}</div>
+    ${r.note?`<div class="q">“${esc(r.note.length>90?r.note.slice(0,88)+'…':r.note)}”</div>`:''}
+    ${tipExtras(id)}
+    <div class="cta">Click to see it in the list</div>`;
+}
+function placeTip(id){
+  const tip=$('#tip'),box=mapBox(),g=box.querySelector(`.seg[data-sec="${id}"] .vis`);
+  if(!g){tip.hidden=true;return;}
+  const len=g.getTotalLength(),p=g.getPointAtLength(len/2),m=g.getScreenCTM();
+  const br=box.getBoundingClientRect();
+  const x=p.x*m.a+p.y*m.c+m.e-br.left, y=p.x*m.b+p.y*m.d+m.f-br.top;
+  tip.innerHTML=tipHtml(id);tip.hidden=false;
+  const half=Math.min(125,br.width/2-8);
+  tip.style.left=Math.max(half+8,Math.min(br.width-half-8,x))+'px';
+  tip.style.top=y+'px';
+  tip.classList.toggle('below',br.top+y<tip.offsetHeight+80);
+}
+function setActive(id,fromMap){
+  active=id;
+  const box=mapBox();
+  box.classList.toggle('hovering',!!id);
+  box.querySelectorAll('.seg').forEach(g=>g.classList.toggle('on',g.dataset.sec===id));
+  box.querySelectorAll('.lbl').forEach(t=>t.classList.toggle('on',t.dataset.lbl===id));
+  document.querySelectorAll('#sections .row').forEach(r=>r.classList.toggle('on',r.dataset.sec===id));
+  if(id&&fromMap)placeTip(id);else $('#tip').hidden=true;
+}
+function goToRow(id){
+  const row=document.getElementById('row-'+id);if(!row)return;
+  row.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+  row.classList.remove('flash');void row.offsetWidth;row.classList.add('flash');
+}
+function wireMap(){
+  const box=mapBox();
+  box.addEventListener('pointerover',e=>{const g=e.target.closest('.seg');if(g)setActive(g.dataset.sec,true);});
+  box.addEventListener('pointerleave',()=>setActive(null));
+  box.addEventListener('focusin',e=>{const g=e.target.closest('.seg');if(g)setActive(g.dataset.sec,true);});
+  box.addEventListener('focusout',e=>{if(!box.contains(e.relatedTarget))setActive(null);});
+  const go=g=>{const id=g.dataset.sec;latestFor(id)?goToRow(id):openDrawer(id);};
+  box.addEventListener('click',e=>{const g=e.target.closest('.seg');if(!g)return;
+    if(e.pointerType==='touch'&&active!==g.dataset.sec){setActive(g.dataset.sec,true);return;}
+    go(g);});
+  box.addEventListener('keydown',e=>{const g=e.target.closest('.seg');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go(g);}if(e.key==='Escape')setActive(null);});
+  const list=$('#sections');
+  list.addEventListener('pointerover',e=>{const r=e.target.closest('.row');if(r&&r.dataset.sec!==active)setActive(r.dataset.sec,false);});
+  list.addEventListener('pointerleave',()=>setActive(null));
+  window.addEventListener('resize',()=>{if(active&&!$('#tip').hidden)placeTip(active);});
+}
+
+function modLinks(x,coll){
+  const fc=flagCount(x.id),mine=myFlag(x.id);
+  let h=`<button type="button" class="lnk" data-flag="${esc(x.id)}" data-kind="${coll}" ${mine?'disabled':''}>${mine?'Flagged':'Flag'}</button>`;
+  if(isOwner){
+    if(fc)h+=`<span class="modnote">${fc} flag${fc===1?'':'s'}${hiddenByFlags(x)?' · hidden for others':''}</span>`;
+    if(hiddenByFlags(x))h+=`<button type="button" class="lnk" data-keep="${coll}/${esc(x.id)}">Keep visible</button>`;
+    h+=`<button type="button" class="lnk danger" data-del="${coll}/${esc(x.id)}">Delete</button>`;
+  }
+  return h;
+}
+function hazHtml(sec){
+  return hazardsFor(sec).map(h=>`<div class="haz"><span class="hz-ic"><span>!</span></span><div class="hz-body">
+    <div><b>${HAZ[h.type]||'Hazard'}</b> · ${ago(h.at)}${h.note?` · “${esc(h.note)}”`:''}</div>
+    ${h.photoId?`<img class="photo" src="/_blob/${esc(h.photoId)}" alt="Photo of the hazard" loading="lazy">`:''}
+    <div class="links-row"><button type="button" class="lnk" data-cleared="${esc(h.id)}">It's cleared</button>${modLinks(h,'hazards')}</div>
+  </div></div>`).join('');
+}
+
+function renderSections(){
+  const risk=forecastRiskNow();
+  const guess={high:'Forecast says likely icy',med:'Forecast says possible icy patches',low:'Forecast looks fine'}[risk];
+  let html='';
+  for(const [zone,desc] of ZONES){
+    html+=`<div class="group">${zone}, <span>${desc}</span></div>`;
+    for(const s of SECTIONS.filter(x=>x.zone===zone)){
+      const r=latestFor(s.id);
+      if(!r){
+        html+=`<article class="row${s.id===active?' on':''}" id="row-${s.id}" data-sec="${s.id}"><div class="time">—</div><div class="body"><div class="meta">No report in 12h</div><h3>${esc(s.name)}</h3><div class="sub"><span class="status"><i style="background:var(--none)"></i>Unknown</span><span class="sep">·</span><span>${guess}</span></div>${hazHtml(s.id)}<div class="acts"><button type="button" class="pill ghost sm" data-report="${s.id}">Report this section</button></div></div></article>`;
+        continue;
+      }
+      const t=tally(r.id),op=Math.max(.5,1-(Date.now()-r.at)/MAX_AGE*.5);
+      const mine=votes.find(v=>v.reportId===r.id&&v.by===uid);
+      const reg=reportCountBy(r.by)>=3, disputed=t.no>t.yes;
+      html+=`<article class="row${s.id===active?' on':''}" id="row-${s.id}" data-sec="${s.id}" style="opacity:${op.toFixed(2)}">
+        <div class="time">${hhmm(r.at)}</div>
+        <div class="body">
+          <div class="meta">${ago(r.at)} · ${t.yes?'confirmed by '+t.yes:'unconfirmed'}${reg?' · Regular reporter':''}</div>
+          <h3>${esc(s.name)}</h3>
+          <div class="sub"><span class="status"><i style="background:var(--${r.surface})"></i>${SURF[r.surface].label}</span>${disputed?'<span class="sep">·</span><span class="flag">May have changed</span>':''}</div>
+          ${r.note?`<p class="quote">“${esc(r.note)}”</p>`:''}
+          ${r.photoId?`<img class="photo" src="/_blob/${esc(r.photoId)}" alt="Photo of ${esc(s.name)}" loading="lazy">`:''}
+          ${hazHtml(s.id)}
+          <div class="acts">
+            <button type="button" class="pill ghost sm" data-vote="yes" data-id="${esc(r.id)}" ${mine?'disabled':''}>${mine&&mine.vote==='yes'?'Confirmed':'Still accurate'}</button>
+            <button type="button" class="pill ghost sm" data-vote="no" data-id="${esc(r.id)}" data-sec="${s.id}" ${mine?'disabled':''}>It's changed</button>
+          </div>
+          <div class="links-row" style="margin-top:4px">${modLinks(r,'reports')}</div>
+        </div>
+      </article>`;
+    }
+  }
+  $('#sections').innerHTML=html;
+}
+function renderAll(){renderVerdict();renderMap();renderSections();if(active){mapBox().classList.add('hovering');if(!$('#tip').hidden)placeTip(active);}}
+
+const drawer=$('#drawer');
+const smooth=()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
+function openDrawer(sec){
+  if(sec){const el=document.getElementById('sec-'+sec);if(el){el.checked=true;picked.section=sec;}}
+  syncSubmit();
+  drawer.scrollIntoView({behavior:smooth(),block:'start'});
+  setTimeout(()=>{const f=sec?(picked.kind==='hazard'?document.querySelector('#hazOpts input'):document.getElementById('surf-clear')):document.querySelector('#secOpts input');f&&f.focus({preventScroll:true});},350);
+}
+$('#openReport').addEventListener('click',e=>{e.preventDefault();openDrawer();});
+
+function syncSubmit(){
+  const ok=picked.section&&(picked.kind==='hazard'?picked.hazard:picked.surface)&&db;
+  $('#submit').disabled=!ok;
+  if($('#submit').textContent!=='Posting…')$('#submit').textContent=picked.kind==='hazard'?'Post hazard':'Post report';
+}
+function setKind(k){
+  picked.kind=k;$('#surfSet').hidden=k!=='surface';$('#hazSet').hidden=k!=='hazard';
+  $('#note').placeholder=k==='hazard'?'e.g. Path flooded under the Cherry St bridge, use the road':'e.g. Boardwalk icy, paved path beside it OK';
+  const r=document.getElementById('kind-'+k);if(r)r.checked=true;
+  syncSubmit();
+}
+function buildForm(){
+  $('#secOpts').innerHTML=SECTIONS.map(s=>`<div class="opt"><input type="radio" name="sec" id="sec-${s.id}" value="${s.id}"><label for="sec-${s.id}">${esc(SHORT[s.id])}</label></div>`).join('');
+  $('#surfOpts').innerHTML=Object.entries(SURF).map(([k,v])=>`<div class="opt"><input type="radio" name="surf" id="surf-${k}" value="${k}"><label for="surf-${k}"><span class="sw" style="background:var(--${k})"></span>${v.label}<small>${v.hint}</small></label></div>`).join('');
+  $('#hazOpts').innerHTML=Object.entries(HAZ).map(([k,v])=>`<div class="opt"><input type="radio" name="haz" id="haz-${k}" value="${k}"><label for="haz-${k}">${v}</label></div>`).join('');
+  $('#report').addEventListener('change',e=>{
+    if(e.target.name==='kind')return setKind(e.target.value);
+    if(e.target.name==='sec')picked.section=e.target.value;
+    if(e.target.name==='surf')picked.surface=e.target.value;
+    if(e.target.name==='haz')picked.hazard=e.target.value;
+    syncSubmit();});
+}
+function showMsg(el,kind,text){el.hidden=false;el.className='msg '+kind;el.textContent=text;}
+function lastSubmit(key){try{return +localStorage.getItem('mgt-last-'+key)||0;}catch(e){return 0;}}
+function markSubmit(key){try{localStorage.setItem('mgt-last-'+key,String(Date.now()));}catch(e){}}
+
+$('#report').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const msg=$('#formMsg');
+  if(!db){showMsg(msg,'err','Reports can’t be saved right now. Try reloading the page.');return;}
+  const isHaz=picked.kind==='hazard';
+  if(!picked.section||!(isHaz?picked.hazard:picked.surface)){showMsg(msg,'err',isHaz?'Pick a section and a hazard type first.':'Pick a section and a surface first.');return;}
+  const rkey=(isHaz?'h-':'')+picked.section;
+  if(Date.now()-lastSubmit(rkey)<10*60e3){showMsg(msg,'err',isHaz?'You just reported a hazard here. Give it a few minutes.':'You just reported this section. Try another, or confirm an existing report.');return;}
+  const btn=$('#submit');btn.disabled=true;btn.textContent='Posting…';
+  let photoFailed=false;
+  try{
+    const body=isHaz?{section:picked.section,type:picked.hazard,note:$('#note').value.trim().slice(0,200),at:Date.now(),by:uid||null}
+                    :{section:picked.section,surface:picked.surface,note:$('#note').value.trim().slice(0,200),at:Date.now(),by:uid||null};
+    const file=$('#photo').files&&$('#photo').files[0];
+    if(file&&assets){try{const up=await assets.upload(file);body.photoId=up.id;}catch(err){photoFailed=true;}}
+    await db.collection(isHaz?'hazards':'reports').add(body);
+    markSubmit(rkey);
+    const name=SHORT[picked.section],what=isHaz?'Hazard posted':'Posted';
+    $('#report').reset();picked={kind:'surface',section:null,surface:null,hazard:null};setKind('surface');
+    showMsg(msg,'ok',photoFailed?`${what} for ${name}, without the photo (it didn’t upload).`:isHaz?`${what} for ${name}. It shows on the map until someone marks it cleared.`:`${what} for ${name}. Runners passing by can confirm it.`);
+  }catch(err){
+    showMsg(msg,'err',err&&err.code==='quota_exceeded'?'The report store is full. Old reports need clearing first.':'That didn’t save. Check your connection and post again.');
+  }finally{btn.textContent='';syncSubmit();}
+});
+
+document.addEventListener('click',async e=>{
+  const rep=e.target.closest('[data-report]');if(rep){openDrawer(rep.dataset.report);return;}
+  const fl=e.target.closest('[data-flag]');
+  if(fl&&db){fl.disabled=true;fl.textContent='Flagged';
+    const key=(fl.dataset.flag+'__'+(uid||('anon'+Math.random().toString(36).slice(2,8)))).slice(0,190);
+    try{await db.collection('flags').doc(key).set({targetId:fl.dataset.flag,kind:fl.dataset.kind,by:uid||null,at:Date.now()});}catch(err){fl.disabled=false;fl.textContent='Flag';}
+    return;}
+  const cl=e.target.closest('[data-cleared]');
+  if(cl&&db){cl.disabled=true;cl.textContent='Marked cleared';
+    try{await db.doc('hazards/'+cl.dataset.cleared).update({clearedAt:Date.now(),clearedBy:uid||null});}catch(err){cl.disabled=false;cl.textContent="It's cleared";}
+    return;}
+  const del=e.target.closest('[data-del]');
+  if(del&&db&&isOwner){
+    if(!del.dataset.armed){del.dataset.armed='1';del.textContent='Confirm delete';setTimeout(()=>{if(del.isConnected){delete del.dataset.armed;del.textContent='Delete';}},4000);return;}
+    del.disabled=true;try{await db.doc(del.dataset.del).delete();}catch(err){del.disabled=false;del.textContent='Delete failed, retry';delete del.dataset.armed;}
+    return;}
+  const kp=e.target.closest('[data-keep]');
+  if(kp&&db&&isOwner){kp.disabled=true;try{await db.doc(kp.dataset.keep).update({kept:true});}catch(err){kp.disabled=false;}return;}
+  const b=e.target.closest('[data-vote]');if(!b||!db)return;
+  const id=b.dataset.id,vote=b.dataset.vote;
+  const key=(id+'__'+(uid||('anon'+Math.random().toString(36).slice(2,8)))).slice(0,190);
+  b.disabled=true;
+  try{await db.collection('votes').doc(key).set({reportId:id,vote,by:uid||null,at:Date.now()});}catch(err){b.disabled=false;}
+  if(vote==='no')openDrawer(b.dataset.sec);
+});
+
+$('#subscribe').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const msg=$('#subMsg'),email=$('#email').value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg(msg,'err','Enter an email address like you@example.com.');return;}
+  if(!db||!uid){showMsg(msg,'err','Signing up needs you to be signed in to view this page.');return;}
+  const mode=document.querySelector('input[name=mode]:checked').value;
+  try{await db.doc('subscribers/'+uid).set({email,mode,at:Date.now()});showMsg(msg,'ok',mode==='icy'?'Subscribed. You’ll only hear from us on icy mornings.':'Subscribed. First email tomorrow at 5:45am.');$('#subBtn').textContent='Update';}
+  catch(err){showMsg(msg,'err','That didn’t save. Try again in a moment.');}
+});
+
+renderForecast();buildForm();renderAll();wireMap();
+setInterval(()=>{renderForecast();renderAll();},60e3);
+
+(async()=>{
+  const cl=window.claude;
+  if(!cl||!cl.use){$('#conn').textContent='Offline preview: reports won’t save here.';$('#liveTxt').textContent='Offline';return;}
+  const [d,u,a]=await Promise.all([cl.use('db'),cl.use('user'),cl.use('assets')]);
+  db=d;userCap=u;assets=a;
+  if(assets)$('#photoRow').hidden=false;
+  if(userCap){try{uid=await userCap.id();}catch(e){uid=null;}}
+  if(!db){$('#conn').textContent='Reports can’t load in this view.';$('#liveTxt').textContent='Offline';return;}
+  $('#conn').textContent='Live. Updates as people report.';
+  syncSubmit();
+  db.collection('reports').orderBy('at','desc').limit(300).onSnapshot(s=>{reports=s.docs.map(x=>Object.assign({id:x.id},x.data()));renderAll();},()=>{$('#conn').textContent='Lost the live connection. Reload to reconnect.';$('#liveTxt').textContent='Reconnect';});
+  db.collection('votes').orderBy('at','desc').limit(1000).onSnapshot(s=>{votes=s.docs.map(x=>x.data());renderSections();},()=>{});
+  db.collection('hazards').orderBy('at','desc').limit(200).onSnapshot(s=>{hazards=s.docs.map(x=>Object.assign({id:x.id},x.data()));renderAll();},()=>{});
+  db.collection('flags').orderBy('at','desc').limit(1000).onSnapshot(s=>{flags=s.docs.map(x=>x.data());renderAll();},()=>{});
+  if(uid){try{const me=await db.doc('subscribers/'+uid).get();if(me.exists){const m=me.data();$('#email').value=m.email||'';const r=document.getElementById('mode-'+m.mode);if(r)r.checked=true;$('#subBtn').textContent='Update';}}catch(e){}}
+  if(userCap&&userCap.isOwner&&await userCap.isOwner()){isOwner=true;renderAll();try{const all=await db.collection('subscribers').get();$('#subCount').textContent='Owner view: '+all.size+' subscriber'+(all.size===1?'':'s')+'.';}catch(e){}}
+})();
+})();
+</script>
